@@ -1,0 +1,21 @@
+version: 2
+updates:
+  # Следим за версиями GitHub Actions (checkout, setup-node и т.д.)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+
+  # Следим за npm-пакетами (playwright, eslint)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps"
+    # Группируем мелкие обновления в один PR, чтобы не заваливало
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
