@@ -1,47 +1,67 @@
-name: Playwright Tests
+name: CI
 
-# Когда запускать пайплайн
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
 
 jobs:
-  test:
-    # Виртуальная машина на стороне GitHub — твой мак здесь не участвует
+  # ── ШАГ 1: проверка кода линтером ──────────────────
+  lint:
+    name: Линтер
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
+    timeout-minutes: 5
     steps:
-      # 1. Скачать код репозитория на раннер
       - uses: actions/checkout@v4
-
-      # 2. Поставить Node нужной версии
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+      - run: npm ci
+      - run: npm run lint
 
-      # 3. Установить зависимости строго по package-lock.json
-      - name: Установка зависимостей
-        run: npm ci
-
-      # 4. Скачать браузеры + системные библиотеки для Linux.
-      #    Здесь PLAYWRIGHT_BROWSERS_PATH не нужен: раннер одноразовый.
+  # ── ШАГ 2: тесты. Стартует только если lint зелёный ──
+  test:
+    name: Тесты
+    runs-on: ubuntu-latest
+    needs: lint          # ← вот эта строка создаёт стрелку в графе
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
       - name: Установка браузеров
         run: npx playwright install --with-deps
-
-      # 5. Прогон тестов
       - name: Прогон тестов
         run: npx playwright test
-
-      # 6. Сохранить отчёт как артефакт — скачивается со страницы прогона.
-      #    if: always() — выгружать и при падении, иначе разбирать будет нечего.
       - name: Выгрузка отчёта
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-report
           path: playwright-report/
+          retention-days: 7
+
+  # ── ШАГ 3: сборка. Стартует только если тесты зелёные ──
+  build:
+    name: Сборка
+    runs-on: ubuntu-latest
+    needs: test
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Подготовка артефакта для деплоя
+        run: |
+          mkdir -p dist
+          cp -r app/* dist/
+          echo "Собрано: $(date)" > dist/build-info.txt
+      - name: Выгрузка сборки
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: dist/
           retention-days: 7
