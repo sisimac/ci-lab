@@ -88,6 +88,7 @@ test('кнопка удаляет только выполненные задач
 });
 
 test('внешний вид не изменился', async ({ page }) => {
+  test.skip(!!process.env.CI, 'Визуальные тесты гоняем только локально: рендеринг в Linux отличается от macOS');
   await expect(page).toHaveScreenshot('empty-list.png');
 });
 
