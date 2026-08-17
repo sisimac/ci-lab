@@ -1,0 +1,8 @@
+{
+  "terminal.integrated.env.osx": {
+    "PLAYWRIGHT_BROWSERS_PATH": "0"
+  },
+  "playwright.env": {
+    "PLAYWRIGHT_BROWSERS_PATH": "0"
+  }
+}

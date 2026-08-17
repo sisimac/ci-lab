@@ -1,0 +1,20 @@
+{
+  "name": "ci-lab",
+  "version": "1.0.0",
+  "description": "Песочница для тренировки Playwright и CI/CD",
+  "private": true,
+  "scripts": {
+    "test": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test",
+    "test:ui": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test --ui",
+    "test:chromium": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test --project=chromium",
+    "report": "PLAYWRIGHT_BROWSERS_PATH=0 playwright show-report",
+    "app": "npx --yes serve app -l 5173"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "@types/node": "^24.0.0"
+  }
+}
