@@ -166,7 +166,7 @@
     });
 
     emptyState.hidden = tasks.length > 0;
-    const active = tasks.filter(t => !t.done).length;
+    const active = tasks.filter(t => t.done).length;
     counter.textContent = 'Активных задач: ' + active;
   }
 
