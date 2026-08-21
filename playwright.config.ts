@@ -24,8 +24,9 @@ export default defineConfig({
   reporter: [['html', { open: 'never' }]],
 
   use: {
-    // Базовый адрес: в тестах пишем page.goto('/') вместо полного URL
-    baseURL: 'http://127.0.0.1:5173',
+    // Базовый адрес. Если задана переменная BASE_URL — идём по ней (смоук по живому сайту),
+    // иначе по локальному серверу.
+    baseURL: process.env.BASE_URL || 'http://127.0.0.1:5173',
 
     // Записывать трейс при повторной попытке после падения
     trace: 'on-first-retry',
@@ -42,13 +43,15 @@ export default defineConfig({
   ],
 
   /**
-   * Playwright сам поднимает локальный сервер перед прогоном
-   * и гасит его после. Работает одинаково на маке и в CI.
+   * Playwright сам поднимает локальный сервер перед прогоном и гасит его после.
+   * Но если задана BASE_URL — сервер не нужен: сайт уже развёрнут снаружи.
    */
-  webServer: {
-    command: 'npx --yes serve app -l 5173',
-    url: 'http://127.0.0.1:5173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 60 * 1000,
-  },
+  webServer: process.env.BASE_URL
+    ? undefined
+    : {
+        command: 'npx --yes serve app -l 5173',
+        url: 'http://127.0.0.1:5173',
+        reuseExistingServer: !process.env.CI,
+        timeout: 60 * 1000,
+      },
 });
