@@ -13,8 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: npm
@@ -28,8 +28,8 @@ jobs:
     needs: lint          # ← вот эта строка создаёт стрелку в графе
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: npm
@@ -37,7 +37,7 @@ jobs:
       - name: Установка браузеров
         run: npx playwright install --with-deps
       - name: Прогон тестов
-        run: npx playwright test
+        run: npx playwright test --grep-invert @smoke
       - name: Выгрузка отчёта
         uses: actions/upload-artifact@v4
         if: always()
@@ -46,22 +46,69 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-  # ── ШАГ 3: сборка. Стартует только если тесты зелёные ──
+  # ── ШАГ 3: сборка артефакта для деплоя ──────────────
   build:
     name: Сборка
     runs-on: ubuntu-latest
     needs: test
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - name: Подготовка артефакта для деплоя
+      - uses: actions/checkout@v7
+      - name: Подготовка артефакта
         run: |
           mkdir -p dist
           cp -r app/* dist/
           echo "Собрано: $(date)" > dist/build-info.txt
-      - name: Выгрузка сборки
-        uses: actions/upload-artifact@v4
+      - name: Настройка Pages
+        uses: actions/configure-pages@v5
+      - name: Выгрузка артефакта для Pages
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: site
           path: dist/
-          retention-days: 7
+
+  # ── ШАГ 4: деплой. Только из main и только после апрува ──
+  deploy:
+    name: Деплой
+    runs-on: ubuntu-latest
+    needs: build
+    # Деплоим только при пуше в main, не на pull request
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    # Привязка к окружению — отсюда берётся требование апрува
+    environment:
+      name: production
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    # Отдаём адрес сайта наружу, чтобы джоба smoke могла его прочитать
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+
+    # Права, необходимые для публикации на Pages
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Публикация на GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # ── ШАГ 5: смоук по развёрнутому сайту ──────────────
+  smoke:
+    name: Смоук после деплоя
+    runs-on: ubuntu-latest
+    needs: deploy
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Установка браузера
+        run: npx playwright install --with-deps chromium
+      - name: Прогон смоука по боевому адресу
+        env:
+          BASE_URL: ${{ needs.deploy.outputs.page_url }}
+        run: npx playwright test --project=chromium --grep @smoke
