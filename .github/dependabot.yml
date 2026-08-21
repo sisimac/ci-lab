@@ -7,6 +7,12 @@ updates:
       interval: "weekly"
     commit-message:
       prefix: "ci"
+      # Собираем все обновления экшенов в один PR — иначе каждый мёрж
+      # запускает отдельный деплой с ручным апрувом
+    groups:
+      github-actions:
+        patterns:
+          - "*"
 
   # Следим за npm-пакетами (playwright, eslint)
   - package-ecosystem: "npm"
