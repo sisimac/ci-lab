@@ -60,9 +60,9 @@ jobs:
           cp -r app/* dist/
           echo "Собрано: $(date)" > dist/build-info.txt
       - name: Настройка Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
       - name: Выгрузка артефакта для Pages
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: dist/
 
@@ -91,7 +91,7 @@ jobs:
     steps:
       - name: Публикация на GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   # ── ШАГ 5: смоук по развёрнутому сайту ──────────────
   smoke:
