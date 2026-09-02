@@ -92,3 +92,21 @@ test('внешний вид не изменился', async ({ page }) => {
   await expect(page).toHaveScreenshot('empty-list.png');
 });
 
+test('счётчик обновляется после добавления задачи', async ({ page }) => {
+  // Подмешиваем приложению случайную задержку перерисовки — от 0 до 80 мс.
+  // Так ведёт себя настоящий интерфейс, который ждёт ответа сервера.
+  await page.evaluate(() => {
+    const original = window['render'];
+    window['render'] = () => setTimeout(original, Math.random() * 80);
+  });
+
+  await page.getByPlaceholder('Что нужно сделать?').fill('Задача с задержкой');
+  await page.getByRole('button', { name: 'Добавить' }).click();
+
+  // Две ошибки разом, обе встречаются в реальных проектах:
+  // 1) фиксированная пауза вместо ожидания события — «50 мс должно хватить»;
+  // 2) textContent читается ровно один раз, без повторных попыток.
+  await page.waitForTimeout(50);
+  const text = await page.locator('#counter').textContent();
+  expect(text).toBe('Активных задач: 1');
+});
