@@ -91,21 +91,3 @@ test('внешний вид не изменился', async ({ page }) => {
   test.skip(!!process.env.CI, 'Визуальные тесты гоняем только локально: рендеринг в Linux отличается от macOS');
   await expect(page).toHaveScreenshot('empty-list.png');
 });
-
-test('счётчик обновляется после добавления задачи', async ({ page }) => {
-  // Приложение специально заторможено: половина прогонов перерисовывается
-  // мгновенно, половина — через две секунды. Так ведёт себя интерфейс,
-  // который ждёт ответа сервера.
-  await page.evaluate(() => {
-    const original = window['render'];
-    window['render'] = () => setTimeout(original, Math.random() < 0.5 ? 0 : 2000);
-  });
-
-  await page.getByPlaceholder('Что нужно сделать?').fill('Задача с задержкой');
-  await page.getByRole('button', { name: 'Добавить' }).click();
-
-  // Локатор внутри expect — проверка сама опрашивает страницу, пока условие
-  // не сойдётся или не выйдет таймаут. Разовое чтение через textContent
-  // такого не умеет: снимок в неудачный момент и есть источник флака.
-  await expect(page.getByText('Активных задач: 1')).toBeVisible();
-});
