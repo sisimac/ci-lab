@@ -64,7 +64,7 @@ playwright.config.ts              браузеры, webServer, отчёты, ret
 eslint.config.js                  правила линтера
 .github/workflows/playwright.yml  пайплайн
 .github/dependabot.yml            автообновление зависимостей
-CLAUDE.md                         правила работы над проектом
+AGENTS.md                         правила работы Codex и учебный режим
 ```
 
 ## Запуск локально
